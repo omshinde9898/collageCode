@@ -1,28 +1,17 @@
-import grpc
-from concurrent import futures
-import time
-import factorial_pb2
-import factorial_pb2_grpc
+from xmlrpc.server import SimpleXMLRPCServer
 
-class FactorialServicer(factorial_pb2_grpc.FactorialServiceServicer):
-    def ComputeFactorial(self, request, context):
-        n = request.number
-        result = 1
-        for i in range(2, n + 1):
-            result *= i
-        return factorial_pb2.FactorialResponse(result=result)
+def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    else:
+        return n * factorial(n - 1)
 
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
-    factorial_pb2_grpc.add_FactorialServiceServicer_to_server(FactorialServicer(), server)
-    server.add_insecure_port('[::]:50051')
-    server.start()
-    print("Server started on port 50051...")
-    try:
-        while True:
-            time.sleep(86400)  # Sleep for 1 day
-    except KeyboardInterrupt:
-        server.stop(0)
+# Create server
+server = SimpleXMLRPCServer(("localhost", 8000))
+print("Server is listening on port 8000...")
 
-if __name__ == '__main__':
-    serve()
+# Register function
+server.register_function(factorial, "factorial")
+
+# Run server
+server.serve_forever()
